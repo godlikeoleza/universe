@@ -12,6 +12,12 @@ let G = 0.0005;
 let COSMIC_EXPANSION_RATE = 0.0000005;
 let DARK_MATTER_INFLUENCE = 0.0005;
 
+let scale = 1;
+let minScale = 0.5; // This prevents zooming out too far
+let maxScale = 5;   // This limits how far you can zoom in
+let offsetX = 0;
+let offsetY = 0;
+
 const stages = [
     { name: 'Quark', color: 'white', size: 2, fusionThreshold: 1000, fusionProbability: 0.001 },
     { name: 'Proton/Neutron', color: 'lightblue', size: 4, fusionThreshold: 2000, fusionProbability: 0.0008 },
@@ -184,9 +190,6 @@ class Particle {
 
 let particles = [];
 let quadtree;
-let scale = 1;
-let offsetX = 0;
-let offsetY = 0;
 
 function init() {
     particles = [];
@@ -211,9 +214,19 @@ function animate() {
     ctx.scale(scale, scale);
     ctx.translate(-canvas.width / 2 + offsetX, -canvas.height / 2 + offsetY);
 
+    // Calculate visible area
+    const visibleLeft = -offsetX - canvas.width / 2 / scale;
+    const visibleTop = -offsetY - canvas.height / 2 / scale;
+    const visibleRight = visibleLeft + canvas.width / scale;
+    const visibleBottom = visibleTop + canvas.height / scale;
+
     for (let particle of particles) {
-        particle.update(particles, quadtree);
-        particle.draw();
+        // Only update and draw particles within or near the visible area
+        if (particle.x > visibleLeft - 50 && particle.x < visibleRight + 50 &&
+            particle.y > visibleTop - 50 && particle.y < visibleBottom + 50) {
+            particle.update(particles, quadtree);
+            particle.draw();
+        }
     }
 
     ctx.restore();
@@ -290,11 +303,21 @@ canvas.addEventListener('mouseup', () => {
 canvas.addEventListener('wheel', (e) => {
     e.preventDefault();
     const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
-    scale *= zoomFactor;
+    let newScale = scale * zoomFactor;
 
-    // Adjust offset to zoom towards mouse position
-    offsetX -= (e.clientX - canvas.width / 2) * (zoomFactor - 1) / scale;
-    offsetY -= (e.clientY - canvas.height / 2) * (zoomFactor - 1) / scale;
+    // Limit the scale to our defined min and max
+    newScale = Math.max(minScale, Math.min(maxScale, newScale));
+
+    // Only apply zoom if it's within our limits
+    if (newScale !== scale) {
+        // Calculate zoom
+        const zoomAmount = newScale / scale;
+        scale = newScale;
+
+        // Adjust offset to zoom towards mouse position
+        offsetX -= (e.clientX - canvas.width / 2) * (zoomAmount - 1) / scale;
+        offsetY -= (e.clientY - canvas.height / 2) * (zoomAmount - 1) / scale;
+    }
 });
 
 // Web Worker for parallel computation
