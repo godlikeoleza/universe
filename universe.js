@@ -114,26 +114,37 @@ class Particle {
     }
 
     collide(other) {
-        // Elastic collision
-        let vCollision = {x: other.x - this.x, y: other.y - this.y};
-        let distance = Math.sqrt(vCollision.x**2 + vCollision.y**2);
-        let vCollisionNorm = {x: vCollision.x / distance, y: vCollision.y / distance};
-        let vRelativeVelocity = {x: this.vx - other.vx, y: this.vy - other.vy};
-        let speed = vRelativeVelocity.x * vCollisionNorm.x + vRelativeVelocity.y * vCollisionNorm.y;
-        if (speed < 0) return;
-        let impulse = 2 * speed / (this.mass + other.mass);
-        this.vx -= impulse * other.mass * vCollisionNorm.x;
-        this.vy -= impulse * other.mass * vCollisionNorm.y;
-        other.vx += impulse * this.mass * vCollisionNorm.x;
-        other.vy += impulse * this.mass * vCollisionNorm.y;
+        if (this.stage === other.stage && this.stage < stages.length - 1) {
+            // Combine particles and evolve
+            this.stage++;
+            this.mass = stages[this.stage].size * 10;
+            this.energy += other.energy;
+            this.temperature = (this.temperature + other.temperature) / 2;
+            this.vx = (this.vx + other.vx) / 2;
+            this.vy = (this.vy + other.vy) / 2;
+            particles.splice(particles.indexOf(other), 1);
+        } else {
+            // Elastic collision
+            let vCollision = {x: other.x - this.x, y: other.y - this.y};
+            let distance = Math.sqrt(vCollision.x**2 + vCollision.y**2);
+            let vCollisionNorm = {x: vCollision.x / distance, y: vCollision.y / distance};
+            let vRelativeVelocity = {x: this.vx - other.vx, y: this.vy - other.vy};
+            let speed = vRelativeVelocity.x * vCollisionNorm.x + vRelativeVelocity.y * vCollisionNorm.y;
+            if (speed < 0) return;
+            let impulse = 2 * speed / (this.mass + other.mass);
+            this.vx -= impulse * other.mass * vCollisionNorm.x;
+            this.vy -= impulse * other.mass * vCollisionNorm.y;
+            other.vx += impulse * this.mass * vCollisionNorm.x;
+            other.vy += impulse * this.mass * vCollisionNorm.y;
 
-        // Temperature exchange
-        let avgTemp = (this.temperature + other.temperature) / 2;
-        this.temperature = other.temperature = avgTemp;
+            // Temperature exchange
+            let avgTemp = (this.temperature + other.temperature) / 2;
+            this.temperature = other.temperature = avgTemp;
 
-        // Energy transfer
-        let totalEnergy = this.energy + other.energy;
-        this.energy = other.energy = totalEnergy / 2;
+            // Energy transfer
+            let totalEnergy = this.energy + other.energy;
+            this.energy = other.energy = totalEnergy / 2;
+        }
     }
 }
 
