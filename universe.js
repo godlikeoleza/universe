@@ -14,7 +14,6 @@ let DARK_MATTER_INFLUENCE = 0.0005;
 
 let scale = 1;
 let minScale = 0.5; // This prevents zooming out too far
-let maxScale = 5;   // This limits how far you can zoom in
 let offsetX = 0;
 let offsetY = 0;
 
@@ -214,19 +213,9 @@ function animate() {
     ctx.scale(scale, scale);
     ctx.translate(-canvas.width / 2 + offsetX, -canvas.height / 2 + offsetY);
 
-    // Calculate visible area
-    const visibleLeft = -offsetX - canvas.width / 2 / scale;
-    const visibleTop = -offsetY - canvas.height / 2 / scale;
-    const visibleRight = visibleLeft + canvas.width / scale;
-    const visibleBottom = visibleTop + canvas.height / scale;
-
     for (let particle of particles) {
-        // Only update and draw particles within or near the visible area
-        if (particle.x > visibleLeft - 50 && particle.x < visibleRight + 50 &&
-            particle.y > visibleTop - 50 && particle.y < visibleBottom + 50) {
-            particle.update(particles, quadtree);
-            particle.draw();
-        }
+        particle.update(particles, quadtree);
+        particle.draw();
     }
 
     ctx.restore();
@@ -305,8 +294,8 @@ canvas.addEventListener('wheel', (e) => {
     const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
     let newScale = scale * zoomFactor;
 
-    // Limit the scale to our defined min and max
-    newScale = Math.max(minScale, Math.min(maxScale, newScale));
+    // Limit the scale to our defined minimum
+    newScale = Math.max(minScale, newScale);
 
     // Only apply zoom if it's within our limits
     if (newScale !== scale) {
