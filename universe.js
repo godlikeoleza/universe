@@ -1,3 +1,6 @@
+// universe.js
+import { Quadtree } from './quadtree.js';
+
 const canvas = document.getElementById('universeCanvas');
 const ctx = canvas.getContext('2d');
 const infoDiv = document.getElementById('info');
@@ -5,9 +8,9 @@ const infoDiv = document.getElementById('info');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-const G = 0.0005; // Gravitational constant
-const COSMIC_EXPANSION_RATE = 0.0000005; // Expansion rate
-const DARK_MATTER_INFLUENCE = 0.0005; // Dark matter influence
+let G = 0.0005;
+let COSMIC_EXPANSION_RATE = 0.0000005;
+let DARK_MATTER_INFLUENCE = 0.0005;
 
 const stages = [
     { name: 'Quark', color: 'white', size: 2, fusionThreshold: 1000, fusionProbability: 0.001 },
@@ -30,11 +33,12 @@ class Particle {
         this.x = x;
         this.y = y;
         this.stage = stage;
-        this.vx = (Math.random() - 0.5) * 0.2; // Initial velocity
-        this.vy = (Math.random() - 0.5) * 0.2; // Initial velocity
+        this.vx = (Math.random() - 0.5) * 0.2;
+        this.vy = (Math.random() - 0.5) * 0.2;
         this.mass = stages[stage].size * 10;
         this.energy = this.mass * 10;
         this.temperature = 300;
+        this.trail = [];
     }
 
     draw() {
@@ -49,11 +53,28 @@ class Particle {
         ctx.beginPath();
         ctx.arc(this.x, this.y, stages[this.stage].size * 1.2, 0, Math.PI * 2);
         ctx.fill();
+
+        // Draw trail
+        ctx.beginPath();
+        for (let i = 0; i < this.trail.length; i++) {
+            ctx.lineTo(this.trail[i].x, this.trail[i].y);
+        }
+        ctx.strokeStyle = `rgba(${stages[this.stage].color}, 0.5)`;
+        ctx.stroke();
     }
 
-    update(particles) {
+    update(particles, quadtree) {
         let fx = 0, fy = 0;
-        for (let particle of particles) {
+        
+        // Use quadtree for efficient collision detection
+        let nearbyParticles = quadtree.retrieve({
+            x: this.x - 50,
+            y: this.y - 50,
+            width: 100,
+            height: 100
+        });
+
+        for (let particle of nearbyParticles) {
             if (particle === this) continue;
             
             let dx = particle.x - this.x;
@@ -117,9 +138,13 @@ class Particle {
             this.stage < stages.length - 1) {
             this.stage++;
             this.mass = stages[this.stage].size * 10;
-            this.energy += this.mass * 15; // Further reduced energy release from fusion
-            this.temperature *= 1.1; // Further reduced temperature increase from fusion
+            this.energy += this.mass * 15;
+            this.temperature *= 1.1;
         }
+
+        // Update trail
+        this.trail.push({x: this.x, y: this.y});
+        if (this.trail.length > 20) this.trail.shift();
     }
 
     collide(other) {
@@ -127,8 +152,8 @@ class Particle {
             // Combine particles and evolve
             this.stage++;
             this.mass = stages[this.stage].size * 10;
-            this.energy = (this.energy + other.energy) * 1.02; // Further reduced energy boost on evolution
-            this.temperature = (this.temperature + other.temperature) * 1.02; // Further reduced temperature boost on evolution
+            this.energy = (this.energy + other.energy) * 1.02;
+            this.temperature = (this.temperature + other.temperature) * 1.02;
             this.vx = (this.vx + other.vx) / 2;
             this.vy = (this.vy + other.vy) / 2;
             particles.splice(particles.indexOf(other), 1);
@@ -158,9 +183,14 @@ class Particle {
 }
 
 let particles = [];
+let quadtree;
+let scale = 1;
+let offsetX = 0;
+let offsetY = 0;
 
 function init() {
-    for (let i = 0; i < 200; i++) { // Initial particle count
+    particles = [];
+    for (let i = 0; i < 200; i++) {
         particles.push(new Particle(Math.random() * canvas.width, Math.random() * canvas.height));
     }
 }
@@ -170,10 +200,23 @@ function animate() {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.1)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
+    // Create quadtree for this frame
+    quadtree = new Quadtree(0, {x: 0, y: 0, width: canvas.width, height: canvas.height});
     for (let particle of particles) {
-        particle.update(particles);
+        quadtree.insert(particle);
+    }
+
+    ctx.save();
+    ctx.translate(canvas.width / 2, canvas.height / 2);
+    ctx.scale(scale, scale);
+    ctx.translate(-canvas.width / 2 + offsetX, -canvas.height / 2 + offsetY);
+
+    for (let particle of particles) {
+        particle.update(particles, quadtree);
         particle.draw();
     }
+
+    ctx.restore();
 
     updateInfo();
 }
@@ -204,8 +247,74 @@ function updateInfo() {
 init();
 animate();
 
+// User interaction
+document.getElementById('gravitySlider').addEventListener('input', (e) => {
+    G = parseFloat(e.target.value);
+});
+
+document.getElementById('expansionSlider').addEventListener('input', (e) => {
+    COSMIC_EXPANSION_RATE = parseFloat(e.target.value);
+});
+
+document.getElementById('darkMatterSlider').addEventListener('input', (e) => {
+    DARK_MATTER_INFLUENCE = parseFloat(e.target.value);
+});
+
+document.getElementById('resetButton').addEventListener('click', () => {
+    init();
+});
+
+// Zoom and pan functionality
+let isDragging = false;
+let lastX, lastY;
+
+canvas.addEventListener('mousedown', (e) => {
+    isDragging = true;
+    lastX = e.clientX;
+    lastY = e.clientY;
+});
+
+canvas.addEventListener('mousemove', (e) => {
+    if (isDragging) {
+        offsetX += (e.clientX - lastX) / scale;
+        offsetY += (e.clientY - lastY) / scale;
+        lastX = e.clientX;
+        lastY = e.clientY;
+    }
+});
+
+canvas.addEventListener('mouseup', () => {
+    isDragging = false;
+});
+
+canvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1;
+    scale *= zoomFactor;
+
+    // Adjust offset to zoom towards mouse position
+    offsetX -= (e.clientX - canvas.width / 2) * (zoomFactor - 1) / scale;
+    offsetY -= (e.clientY - canvas.height / 2) * (zoomFactor - 1) / scale;
+});
+
+// Web Worker for parallel computation
+const worker = new Worker('worker.js');
+
+worker.onmessage = function(e) {
+    particles = e.data;
+};
+
+function updateParticles() {
+    worker.postMessage({particles, G, COSMIC_EXPANSION_RATE, DARK_MATTER_INFLUENCE});
+}
+
+setInterval(updateParticles, 1000 / 30); // Update particles 30 times per second
+
 canvas.addEventListener('click', (event) => {
-    particles.push(new Particle(event.clientX, event.clientY));
+    const rect = canvas.getBoundingClientRect();
+    const x = (event.clientX - rect.left - canvas.width / 2) / scale + canvas.width / 2 - offsetX;
+    const y = (event.clientY - rect.top - canvas.height / 2) / scale + canvas.height / 2 - offsetY;
+    particles.push(new Particle(x, y));
 });
 
 window.addEventListener('resize', () => {
