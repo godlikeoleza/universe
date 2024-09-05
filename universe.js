@@ -5,23 +5,23 @@ const infoDiv = document.getElementById('info');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-const G = 0.1; // Gravitational constant
-const COSMIC_EXPANSION_RATE = 0.0001;
-const DARK_MATTER_INFLUENCE = 0.05;
+const G = 0.01; // Reduced gravitational constant
+const COSMIC_EXPANSION_RATE = 0.00001; // Reduced expansion rate
+const DARK_MATTER_INFLUENCE = 0.01; // Reduced dark matter influence
 
 const stages = [
-    { name: 'Quark', color: 'white', size: 2, fusionThreshold: 1000 },
-    { name: 'Proton/Neutron', color: 'lightblue', size: 4, fusionThreshold: 2000 },
-    { name: 'Atom', color: 'blue', size: 6, fusionThreshold: 3000 },
-    { name: 'Gas Cloud', color: 'purple', size: 10, fusionThreshold: 5000 },
-    { name: 'Star', color: 'yellow', size: 20, fusionThreshold: 10000 },
-    { name: 'Supernova', color: 'red', size: 30, fusionThreshold: Infinity },
-    { name: 'Planetary Nebula', color: 'pink', size: 40, fusionThreshold: Infinity },
-    { name: 'Planet', color: 'green', size: 15, fusionThreshold: Infinity },
-    { name: 'Complex Molecule', color: 'cyan', size: 8, fusionThreshold: Infinity },
-    { name: 'Organic Compound', color: 'orange', size: 10, fusionThreshold: Infinity },
-    { name: 'Amino Acid', color: 'magenta', size: 12, fusionThreshold: Infinity },
-    { name: 'Protein', color: 'lime', size: 14, fusionThreshold: Infinity },
+    { name: 'Quark', color: 'white', size: 2, fusionThreshold: 500 },
+    { name: 'Proton/Neutron', color: 'lightblue', size: 4, fusionThreshold: 1000 },
+    { name: 'Atom', color: 'blue', size: 6, fusionThreshold: 1500 },
+    { name: 'Gas Cloud', color: 'purple', size: 10, fusionThreshold: 2000 },
+    { name: 'Star', color: 'yellow', size: 20, fusionThreshold: 3000 },
+    { name: 'Supernova', color: 'red', size: 30, fusionThreshold: 5000 },
+    { name: 'Planetary Nebula', color: 'pink', size: 40, fusionThreshold: 7000 },
+    { name: 'Planet', color: 'green', size: 15, fusionThreshold: 8000 },
+    { name: 'Complex Molecule', color: 'cyan', size: 8, fusionThreshold: 9000 },
+    { name: 'Organic Compound', color: 'orange', size: 10, fusionThreshold: 10000 },
+    { name: 'Amino Acid', color: 'magenta', size: 12, fusionThreshold: 11000 },
+    { name: 'Protein', color: 'lime', size: 14, fusionThreshold: 12000 },
     { name: 'Simple Cell', color: 'aqua', size: 16, fusionThreshold: Infinity }
 ];
 
@@ -34,7 +34,7 @@ class Particle {
         this.vy = (Math.random() - 0.5) * 2;
         this.mass = stages[stage].size * 10;
         this.energy = this.mass * 10;
-        this.temperature = 100; // Initial temperature
+        this.temperature = 300; // Increased initial temperature
     }
 
     draw() {
@@ -93,23 +93,23 @@ class Particle {
         this.x = (this.x + canvas.width) % canvas.width;
         this.y = (this.y + canvas.height) % canvas.height;
         
-        // Energy loss and temperature change
-        this.energy *= 0.999;
-        this.temperature *= 0.999;
+        // Reduced energy and temperature loss
+        this.energy *= 0.9999;
+        this.temperature *= 0.9999;
         
-        // Particle decay
-        if (this.energy < 5 && this.stage > 0) {
+        // Adjusted particle decay
+        if (this.energy < 1 && this.stage > 0) {
             this.stage--;
-            this.energy = this.mass * 10;
-            this.temperature += 100; // Temperature increase on decay
+            this.energy = this.mass * 5;
+            this.temperature += 50; // Reduced temperature increase on decay
         }
 
-        // Nuclear fusion
+        // Adjusted nuclear fusion
         if (this.temperature > stages[this.stage].fusionThreshold && this.stage < stages.length - 1) {
             this.stage++;
             this.mass = stages[this.stage].size * 10;
-            this.energy += this.mass * 100; // Energy release from fusion
-            this.temperature *= 2; // Temperature increase from fusion
+            this.energy += this.mass * 50; // Reduced energy release from fusion
+            this.temperature *= 1.5; // Reduced temperature increase from fusion
         }
     }
 
@@ -118,8 +118,8 @@ class Particle {
             // Combine particles and evolve
             this.stage++;
             this.mass = stages[this.stage].size * 10;
-            this.energy += other.energy;
-            this.temperature = (this.temperature + other.temperature) / 2;
+            this.energy = (this.energy + other.energy) * 1.1; // Slight energy boost on evolution
+            this.temperature = (this.temperature + other.temperature) * 1.1; // Slight temperature boost on evolution
             this.vx = (this.vx + other.vx) / 2;
             this.vy = (this.vy + other.vy) / 2;
             particles.splice(particles.indexOf(other), 1);
@@ -151,7 +151,7 @@ class Particle {
 let particles = [];
 
 function init() {
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 200; i++) { // Increased initial particle count
         particles.push(new Particle(Math.random() * canvas.width, Math.random() * canvas.height));
     }
 }
