@@ -5,6 +5,8 @@ const infoDiv = document.getElementById('info');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
+const G = 0.1; // Gravitational constant (adjusted for simulation)
+
 const stages = [
     { name: 'Quark', color: 'white', size: 2 },
     { name: 'Proton/Neutron', color: 'lightblue', size: 4 },
@@ -28,6 +30,8 @@ class Particle {
         this.stage = stage;
         this.vx = (Math.random() - 0.5) * 2;
         this.vy = (Math.random() - 0.5) * 2;
+        this.mass = stages[stage].size * 10; // Mass proportional to size
+        this.energy = this.mass * 10; // Initial energy
     }
 
     draw() {
@@ -35,15 +39,16 @@ class Particle {
         ctx.arc(this.x, this.y, stages[this.stage].size, 0, Math.PI * 2);
         ctx.fillStyle = stages[this.stage].color;
         ctx.fill();
+
+        // Add energy visualization
+        ctx.fillStyle = `rgba(255, 255, 255, ${this.energy / (this.mass * 10)})`;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, stages[this.stage].size * 1.2, 0, Math.PI * 2);
+        ctx.fill();
     }
 
     update(particles) {
-        this.x += this.vx;
-        this.y += this.vy;
-
-        if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
-        if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
-
+        let fx = 0, fy = 0;
         for (let particle of particles) {
             if (particle === this) continue;
             
@@ -51,16 +56,63 @@ class Particle {
             let dy = particle.y - this.y;
             let distance = Math.sqrt(dx * dx + dy * dy);
             
-            if (distance < stages[this.stage].size + stages[particle.stage].size) {
-                this.collide(particle);
+            if (distance > 0) {
+                // Gravitational force
+                let force = (G * this.mass * particle.mass) / (distance * distance);
+                fx += force * dx / distance;
+                fy += force * dy / distance;
+                
+                // Collision
+                if (distance < stages[this.stage].size + stages[particle.stage].size) {
+                    this.collide(particle);
+                }
             }
+        }
+        
+        // Update velocity based on force
+        this.vx += fx / this.mass;
+        this.vy += fy / this.mass;
+        
+        // Apply velocity
+        this.x += this.vx;
+        this.y += this.vy;
+        
+        // Bounce off edges
+        if (this.x < 0 || this.x > canvas.width) this.vx *= -0.9;
+        if (this.y < 0 || this.y > canvas.height) this.vy *= -0.9;
+        
+        // Energy loss
+        this.energy *= 0.999;
+        
+        // Particle decay
+        if (this.energy < 5 && this.stage > 0) {
+            this.stage--;
+            this.energy = this.mass * 10;
         }
     }
 
     collide(other) {
         if (this.stage === other.stage && this.stage < stages.length - 1) {
+            // Combine particles
             this.stage++;
+            this.mass = stages[this.stage].size * 10;
+            this.energy = this.mass * 10;
+            this.vx = (this.vx + other.vx) / 2;
+            this.vy = (this.vy + other.vy) / 2;
             particles.splice(particles.indexOf(other), 1);
+        } else {
+            // Elastic collision
+            let vCollision = {x: other.x - this.x, y: other.y - this.y};
+            let distance = Math.sqrt(vCollision.x**2 + vCollision.y**2);
+            let vCollisionNorm = {x: vCollision.x / distance, y: vCollision.y / distance};
+            let vRelativeVelocity = {x: this.vx - other.vx, y: this.vy - other.vy};
+            let speed = vRelativeVelocity.x * vCollisionNorm.x + vRelativeVelocity.y * vCollisionNorm.y;
+            if (speed < 0) return;
+            let impulse = 2 * speed / (this.mass + other.mass);
+            this.vx -= impulse * other.mass * vCollisionNorm.x;
+            this.vy -= impulse * other.mass * vCollisionNorm.y;
+            other.vx += impulse * this.mass * vCollisionNorm.x;
+            other.vy += impulse * this.mass * vCollisionNorm.y;
         }
     }
 }
