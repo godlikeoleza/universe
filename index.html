@@ -3,12 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Universe Evolution Model</title>
-    <link rel="stylesheet" href="styles.css">
+    <title>Universe Simulation</title>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        #controls { position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.5); color: white; padding: 10px; }
+        #info { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.5); color: white; padding: 10px; }
+    </style>
 </head>
 <body>
     <canvas id="universeCanvas"></canvas>
+    <div id="controls">
+        <label>Gravity: <input type="range" id="gravitySlider" min="0" max="0.001" step="0.00001" value="0.0005"></label><br>
+        <label>Expansion Rate: <input type="range" id="expansionSlider" min="0" max="0.00001" step="0.0000001" value="0.0000005"></label><br>
+        <label>Dark Matter Influence: <input type="range" id="darkMatterSlider" min="0" max="0.001" step="0.00001" value="0.0005"></label><br>
+        <button id="resetButton">Reset Simulation</button>
+    </div>
     <div id="info"></div>
-    <script src="universe.js"></script>
+    <script src="universe.js" type="module"></script>
 </body>
 </html>
