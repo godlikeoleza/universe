@@ -5,24 +5,24 @@ const infoDiv = document.getElementById('info');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-const G = 0.001; // Further reduced gravitational constant
-const COSMIC_EXPANSION_RATE = 0.000001; // Further reduced expansion rate
-const DARK_MATTER_INFLUENCE = 0.001; // Further reduced dark matter influence
+const G = 0.0005; // Further reduced gravitational constant
+const COSMIC_EXPANSION_RATE = 0.0000005; // Further reduced expansion rate
+const DARK_MATTER_INFLUENCE = 0.0005; // Further reduced dark matter influence
 
 const stages = [
-    { name: 'Quark', color: 'white', size: 2, fusionThreshold: 500 },
-    { name: 'Proton/Neutron', color: 'lightblue', size: 4, fusionThreshold: 1000 },
-    { name: 'Atom', color: 'blue', size: 6, fusionThreshold: 1500 },
-    { name: 'Gas Cloud', color: 'purple', size: 10, fusionThreshold: 2000 },
-    { name: 'Star', color: 'yellow', size: 20, fusionThreshold: 3000 },
-    { name: 'Supernova', color: 'red', size: 30, fusionThreshold: 5000 },
-    { name: 'Planetary Nebula', color: 'pink', size: 40, fusionThreshold: 7000 },
-    { name: 'Planet', color: 'green', size: 15, fusionThreshold: 8000 },
-    { name: 'Complex Molecule', color: 'cyan', size: 8, fusionThreshold: 9000 },
-    { name: 'Organic Compound', color: 'orange', size: 10, fusionThreshold: 10000 },
-    { name: 'Amino Acid', color: 'magenta', size: 12, fusionThreshold: 11000 },
-    { name: 'Protein', color: 'lime', size: 14, fusionThreshold: 12000 },
-    { name: 'Simple Cell', color: 'aqua', size: 16, fusionThreshold: Infinity }
+    { name: 'Quark', color: 'white', size: 2, fusionThreshold: 1000, fusionProbability: 0.001 },
+    { name: 'Proton/Neutron', color: 'lightblue', size: 4, fusionThreshold: 2000, fusionProbability: 0.0008 },
+    { name: 'Atom', color: 'blue', size: 6, fusionThreshold: 3000, fusionProbability: 0.0006 },
+    { name: 'Gas Cloud', color: 'purple', size: 10, fusionThreshold: 4000, fusionProbability: 0.0004 },
+    { name: 'Star', color: 'yellow', size: 20, fusionThreshold: 5000, fusionProbability: 0.0002 },
+    { name: 'Supernova', color: 'red', size: 30, fusionThreshold: 6000, fusionProbability: 0.0001 },
+    { name: 'Planetary Nebula', color: 'pink', size: 40, fusionThreshold: 7000, fusionProbability: 0.00008 },
+    { name: 'Planet', color: 'green', size: 15, fusionThreshold: 8000, fusionProbability: 0.00006 },
+    { name: 'Complex Molecule', color: 'cyan', size: 8, fusionThreshold: 9000, fusionProbability: 0.00004 },
+    { name: 'Organic Compound', color: 'orange', size: 10, fusionThreshold: 10000, fusionProbability: 0.00002 },
+    { name: 'Amino Acid', color: 'magenta', size: 12, fusionThreshold: 11000, fusionProbability: 0.00001 },
+    { name: 'Protein', color: 'lime', size: 14, fusionThreshold: 12000, fusionProbability: 0.000005 },
+    { name: 'Simple Cell', color: 'aqua', size: 16, fusionThreshold: Infinity, fusionProbability: 0 }
 ];
 
 class Particle {
@@ -30,8 +30,8 @@ class Particle {
         this.x = x;
         this.y = y;
         this.stage = stage;
-        this.vx = (Math.random() - 0.5) * 0.5; // Reduced initial velocity
-        this.vy = (Math.random() - 0.5) * 0.5; // Reduced initial velocity
+        this.vx = (Math.random() - 0.5) * 0.2; // Further reduced initial velocity
+        this.vy = (Math.random() - 0.5) * 0.2; // Further reduced initial velocity
         this.mass = stages[stage].size * 10;
         this.energy = this.mass * 10;
         this.temperature = 300;
@@ -83,7 +83,7 @@ class Particle {
         
         // Apply velocity with a speed limit
         const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
-        const maxSpeed = 2;
+        const maxSpeed = 1;
         if (speed > maxSpeed) {
             this.vx = (this.vx / speed) * maxSpeed;
             this.vy = (this.vy / speed) * maxSpeed;
@@ -112,21 +112,23 @@ class Particle {
         }
 
         // Adjusted nuclear fusion
-        if (this.temperature > stages[this.stage].fusionThreshold && this.stage < stages.length - 1) {
+        if (this.temperature > stages[this.stage].fusionThreshold && 
+            Math.random() < stages[this.stage].fusionProbability && 
+            this.stage < stages.length - 1) {
             this.stage++;
             this.mass = stages[this.stage].size * 10;
-            this.energy += this.mass * 25; // Further reduced energy release from fusion
-            this.temperature *= 1.2; // Further reduced temperature increase from fusion
+            this.energy += this.mass * 15; // Further reduced energy release from fusion
+            this.temperature *= 1.1; // Further reduced temperature increase from fusion
         }
     }
 
     collide(other) {
-        if (this.stage === other.stage && this.stage < stages.length - 1) {
+        if (this.stage === other.stage && this.stage < stages.length - 1 && Math.random() < stages[this.stage].fusionProbability * 10) {
             // Combine particles and evolve
             this.stage++;
             this.mass = stages[this.stage].size * 10;
-            this.energy = (this.energy + other.energy) * 1.05; // Reduced energy boost on evolution
-            this.temperature = (this.temperature + other.temperature) * 1.05; // Reduced temperature boost on evolution
+            this.energy = (this.energy + other.energy) * 1.02; // Further reduced energy boost on evolution
+            this.temperature = (this.temperature + other.temperature) * 1.02; // Further reduced temperature boost on evolution
             this.vx = (this.vx + other.vx) / 2;
             this.vy = (this.vy + other.vy) / 2;
             particles.splice(particles.indexOf(other), 1);
@@ -158,7 +160,7 @@ class Particle {
 let particles = [];
 
 function init() {
-    for (let i = 0; i < 150; i++) { // Slightly reduced initial particle count
+    for (let i = 0; i < 200; i++) { // Increased initial particle count
         particles.push(new Particle(Math.random() * canvas.width, Math.random() * canvas.height));
     }
 }
