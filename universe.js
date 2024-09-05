@@ -5,9 +5,9 @@ const infoDiv = document.getElementById('info');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-const G = 0.0005; // Further reduced gravitational constant
-const COSMIC_EXPANSION_RATE = 0.0000005; // Further reduced expansion rate
-const DARK_MATTER_INFLUENCE = 0.0005; // Further reduced dark matter influence
+const G = 0.0005; // Gravitational constant
+const COSMIC_EXPANSION_RATE = 0.0000005; // Expansion rate
+const DARK_MATTER_INFLUENCE = 0.0005; // Dark matter influence
 
 const stages = [
     { name: 'Quark', color: 'white', size: 2, fusionThreshold: 1000, fusionProbability: 0.001 },
@@ -30,8 +30,8 @@ class Particle {
         this.x = x;
         this.y = y;
         this.stage = stage;
-        this.vx = (Math.random() - 0.5) * 0.2; // Further reduced initial velocity
-        this.vy = (Math.random() - 0.5) * 0.2; // Further reduced initial velocity
+        this.vx = (Math.random() - 0.5) * 0.2; // Initial velocity
+        this.vy = (Math.random() - 0.5) * 0.2; // Initial velocity
         this.mass = stages[stage].size * 10;
         this.energy = this.mass * 10;
         this.temperature = 300;
@@ -160,7 +160,7 @@ class Particle {
 let particles = [];
 
 function init() {
-    for (let i = 0; i < 200; i++) { // Increased initial particle count
+    for (let i = 0; i < 200; i++) { // Initial particle count
         particles.push(new Particle(Math.random() * canvas.width, Math.random() * canvas.height));
     }
 }
