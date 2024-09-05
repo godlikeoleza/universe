@@ -5,9 +5,9 @@ const infoDiv = document.getElementById('info');
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-const G = 0.01; // Reduced gravitational constant
-const COSMIC_EXPANSION_RATE = 0.00001; // Reduced expansion rate
-const DARK_MATTER_INFLUENCE = 0.01; // Reduced dark matter influence
+const G = 0.001; // Further reduced gravitational constant
+const COSMIC_EXPANSION_RATE = 0.000001; // Further reduced expansion rate
+const DARK_MATTER_INFLUENCE = 0.001; // Further reduced dark matter influence
 
 const stages = [
     { name: 'Quark', color: 'white', size: 2, fusionThreshold: 500 },
@@ -30,11 +30,11 @@ class Particle {
         this.x = x;
         this.y = y;
         this.stage = stage;
-        this.vx = (Math.random() - 0.5) * 2;
-        this.vy = (Math.random() - 0.5) * 2;
+        this.vx = (Math.random() - 0.5) * 0.5; // Reduced initial velocity
+        this.vy = (Math.random() - 0.5) * 0.5; // Reduced initial velocity
         this.mass = stages[stage].size * 10;
         this.energy = this.mass * 10;
-        this.temperature = 300; // Increased initial temperature
+        this.temperature = 300;
     }
 
     draw() {
@@ -81,7 +81,14 @@ class Particle {
         this.vx += fx / this.mass;
         this.vy += fy / this.mass;
         
-        // Apply velocity
+        // Apply velocity with a speed limit
+        const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+        const maxSpeed = 2;
+        if (speed > maxSpeed) {
+            this.vx = (this.vx / speed) * maxSpeed;
+            this.vy = (this.vy / speed) * maxSpeed;
+        }
+        
         this.x += this.vx;
         this.y += this.vy;
         
@@ -94,22 +101,22 @@ class Particle {
         this.y = (this.y + canvas.height) % canvas.height;
         
         // Reduced energy and temperature loss
-        this.energy *= 0.9999;
-        this.temperature *= 0.9999;
+        this.energy *= 0.99999;
+        this.temperature *= 0.99999;
         
         // Adjusted particle decay
         if (this.energy < 1 && this.stage > 0) {
             this.stage--;
             this.energy = this.mass * 5;
-            this.temperature += 50; // Reduced temperature increase on decay
+            this.temperature += 50;
         }
 
         // Adjusted nuclear fusion
         if (this.temperature > stages[this.stage].fusionThreshold && this.stage < stages.length - 1) {
             this.stage++;
             this.mass = stages[this.stage].size * 10;
-            this.energy += this.mass * 50; // Reduced energy release from fusion
-            this.temperature *= 1.5; // Reduced temperature increase from fusion
+            this.energy += this.mass * 25; // Further reduced energy release from fusion
+            this.temperature *= 1.2; // Further reduced temperature increase from fusion
         }
     }
 
@@ -118,8 +125,8 @@ class Particle {
             // Combine particles and evolve
             this.stage++;
             this.mass = stages[this.stage].size * 10;
-            this.energy = (this.energy + other.energy) * 1.1; // Slight energy boost on evolution
-            this.temperature = (this.temperature + other.temperature) * 1.1; // Slight temperature boost on evolution
+            this.energy = (this.energy + other.energy) * 1.05; // Reduced energy boost on evolution
+            this.temperature = (this.temperature + other.temperature) * 1.05; // Reduced temperature boost on evolution
             this.vx = (this.vx + other.vx) / 2;
             this.vy = (this.vy + other.vy) / 2;
             particles.splice(particles.indexOf(other), 1);
@@ -151,7 +158,7 @@ class Particle {
 let particles = [];
 
 function init() {
-    for (let i = 0; i < 200; i++) { // Increased initial particle count
+    for (let i = 0; i < 150; i++) { // Slightly reduced initial particle count
         particles.push(new Particle(Math.random() * canvas.width, Math.random() * canvas.height));
     }
 }
